@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>식단 기반 당뇨 위험 경고</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <aside class="data-sidebar">
+        <details class="data-drawer">
+          <summary>Data</summary>
+          <div class="data-drawer-body">
+            <section class="drawer-block medical-note" aria-label="medical disclaimer">
+              본 결과는 진단이 아니라 식단 기반 위험 추정입니다. 당뇨병 진단은 A1C, 공복혈당,
+              경구당부하검사 같은 혈액검사와 의료진 평가가 필요합니다.
+            </section>
+
+            <section class="drawer-block quality-panel">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Data Quality</p>
+                  <h2>데이터 품질</h2>
+                </div>
+              </div>
+
+              <div id="qualityList" class="quality-list empty-state">
+                선택된 음식이 없으면 데이터 품질 정보가 여기에 표시됩니다.
+              </div>
+            </section>
+
+            <section class="drawer-block source-panel">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Sources</p>
+                  <h2>데이터 출처 및 해석 주의</h2>
+                </div>
+              </div>
+              <div class="source-copy">
+                <p>
+                  한국 음식 영양 성분 참고: Korean Food Composition Table / Rural
+                  Development Administration
+                </p>
+                <p>
+                  일반 및 서양 음식 영양 성분 참고: USDA FoodData Central
+                </p>
+                <p>
+                  혈당 반응 참고 데이터: University of Sydney International GI Database
+                </p>
+                <p>
+                  직접 혈당 반응 데이터가 없는 경우 유사 식품의 값을 바탕으로 추정했으며,
+                  단일 수치만으로 판단하지 않고 전체 영양, 당류, 식이섬유, 열량, 지방을 함께 봅니다.
+                </p>
+              </div>
+            </section>
+          </div>
+        </details>
+      </aside>
+
+      <header class="hero">
+        <h1 class="hero-title" aria-label="경고 당뇨">경고 당뇨</h1>
+      </header>
+
+      <main class="dashboard">
+        <section class="panel profile-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">0. Profile</p>
+              <h2>기본 정보</h2>
+            </div>
+            <p class="section-note">성별, 신장, 몸무게는 식단 경고 해석을 더 구체화하는 참고값입니다.</p>
+          </div>
+
+          <div class="profile-grid">
+            <label class="field">
+              <span>성별</span>
+              <select id="genderInput">
+                <option value="unspecified">선택 안 함</option>
+                <option value="female">여성</option>
+                <option value="male">남성</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>신장 (cm)</span>
+              <input id="heightInput" type="number" min="100" max="250" placeholder="예: 170" />
+            </label>
+            <label class="field">
+              <span>몸무게 (kg)</span>
+              <input id="weightInput" type="number" min="20" max="300" placeholder="예: 68" />
+            </label>
+          </div>
+        </section>
+
+        <section class="panel search-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">1. Daily Meals</p>
+              <h2>오늘 먹은 음식</h2>
+            </div>
+            <p class="section-note">아침, 점심, 저녁, 기타에 먹은 음식을 직접 입력합니다.</p>
+          </div>
+
+          <div id="mealInputs" class="meal-input-grid">
+            <label class="field meal-text-field">
+              <span>아침</span>
+              <textarea
+                id="mealInputBreakfast"
+                rows="5"
+                placeholder="예: 현미밥, 미역국, 아메리카노"
+              ></textarea>
+              <div id="mealSuggestionsBreakfast" class="meal-suggestions"></div>
+            </label>
+            <label class="field meal-text-field">
+              <span>점심</span>
+              <textarea
+                id="mealInputLunch"
+                rows="5"
+                placeholder="예: 비빔밥, 김치찌개"
+              ></textarea>
+              <div id="mealSuggestionsLunch" class="meal-suggestions"></div>
+            </label>
+            <label class="field meal-text-field">
+              <span>저녁</span>
+              <textarea
+                id="mealInputDinner"
+                rows="5"
+                placeholder="예: 라면, 콜라"
+              ></textarea>
+              <div id="mealSuggestionsDinner" class="meal-suggestions"></div>
+            </label>
+            <label class="field meal-text-field">
+              <span>기타</span>
+              <textarea
+                id="mealInputOther"
+                rows="5"
+                placeholder="예: 바나나, 단백질바, 요거트"
+              ></textarea>
+              <div id="mealSuggestionsOther" class="meal-suggestions"></div>
+            </label>
+          </div>
+          <div class="entry-note">
+            쉼표 또는 줄바꿈으로 여러 음식을 입력할 수 있습니다. 데이터셋에서 가장 가까운 항목으로 자동 매칭됩니다.
+          </div>
+        </section>
+
+        <section class="panel meal-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">2. Daily Meal List</p>
+              <h2>식사별 입력 목록</h2>
+            </div>
+            <p class="section-note">섭취량 배수를 조절하면 결과가 바로 갱신됩니다.</p>
+          </div>
+
+          <div id="mealList" class="meal-list empty-state">
+            선택된 음식이 없습니다.
+          </div>
+        </section>
+
+        <section class="panel result-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">3. Result</p>
+              <h2>식단 기반 위험 요약</h2>
+            </div>
+            <p class="section-note">
+              Low / Caution / High는 식단 패턴 경고이며 의학적 진단이 아닙니다.
+            </p>
+          </div>
+
+          <div id="riskCard" class="risk-card risk-low">
+            <div>
+              <p class="risk-label">오늘 식단 경고</p>
+              <h3 id="riskLevel">Low</h3>
+              <p id="riskSummary">
+                이대로 유지하시면 당신의 오줌을 맑게 유지됩니다.
+              </p>
+            </div>
+            <div class="risk-glance">
+              <p>당류 섭취</p>
+              <strong id="totalSugarHero">0 g</strong>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span>칼로리 비교</span>
+              <strong id="metricKcalComparison">오늘 먹은 칼로리: 0 kcal</strong>
+              <small id="metricKcalComparisonSub" class="metric-subtext">
+                권장 칼로리: 0 kcal / 초과량: 0 kcal / 섭취 비율: 0%
+              </small>
+              <div class="comparison-bar"><div id="metricKcalBar" class="comparison-fill"></div></div>
+            </article>
+            <article class="metric-card">
+              <span>당류 비교</span>
+              <strong id="metricSugarComparison">오늘 먹은 당류: 0 g</strong>
+              <small id="metricSugarComparisonSub" class="metric-subtext">
+                권장 당류 상한: 0 g / 초과량: 0 g / 섭취 비율: 0%
+              </small>
+              <div class="comparison-bar"><div id="metricSugarBar" class="comparison-fill"></div></div>
+            </article>
+            <article class="metric-card">
+              <span>식이섬유 비교</span>
+              <strong id="metricFiberComparison">오늘 먹은 식이섬유: 0 g</strong>
+              <small id="metricFiberComparisonSub" class="metric-subtext">
+                권장 식이섬유: 0 g / 부족량: 0 g / 섭취 비율: 0%
+              </small>
+              <div class="comparison-bar"><div id="metricFiberBar" class="comparison-fill"></div></div>
+            </article>
+            <article class="metric-card">
+              <span>나트륨 비교</span>
+              <strong id="metricSodiumComparison">오늘 먹은 나트륨: 0 mg</strong>
+              <small id="metricSodiumComparisonSub" class="metric-subtext">
+                권장 나트륨 상한: 0 mg / 초과량: 0 mg / 섭취 비율: 0%
+              </small>
+              <div class="comparison-bar"><div id="metricSodiumBar" class="comparison-fill"></div></div>
+            </article>
+            <article class="metric-card">
+              <span>추정 BMI</span>
+              <strong id="metricBmi">-</strong>
+            </article>
+            <article class="metric-card">
+              <span>체격 보정</span>
+              <strong id="metricProfile">없음</strong>
+            </article>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <script type="module" src="./main.js?v=3"></script>
+  </body>
+</html>
+
+import {
+  calculateDailyTotals,
+  calculateDailyGuidance,
+  calculateProfileMetrics,
+  calculateRisk,
+} from "./data/riskRules.js?v=3";
+
+const mealTypeOptions = [
+  { value: "breakfast", label: "아침" },
+  { value: "lunch", label: "점심" },
+  { value: "dinner", label: "저녁" },
+  { value: "other", label: "기타" },
+];
+
+const state = {
+  foods: [],
+  foodIndex: [],
+  mealDrafts: {
+    breakfast: "",
+    lunch: "",
+    dinner: "",
+    other: "",
+  },
+  selectedFoods: [],
+  profile: {
+    gender: "unspecified",
+    heightCm: "",
+    weightKg: "",
+  },
+  activeSuggestions: {
+    breakfast: [],
+    lunch: [],
+    dinner: [],
+    other: [],
+  },
+};
+
+const elements = {
+  mealInputs: {
+    breakfast: document.querySelector("#mealInputBreakfast"),
+    lunch: document.querySelector("#mealInputLunch"),
+    dinner: document.querySelector("#mealInputDinner"),
+    other: document.querySelector("#mealInputOther"),
+  },
+  genderInput: document.querySelector("#genderInput"),
+  heightInput: document.querySelector("#heightInput"),
+  weightInput: document.querySelector("#weightInput"),
+  mealSuggestions: {
+    breakfast: document.querySelector("#mealSuggestionsBreakfast"),
+    lunch: document.querySelector("#mealSuggestionsLunch"),
+    dinner: document.querySelector("#mealSuggestionsDinner"),
+    other: document.querySelector("#mealSuggestionsOther"),
+  },
+  mealList: document.querySelector("#mealList"),
+  qualityList: document.querySelector("#qualityList"),
+  riskCard: document.querySelector("#riskCard"),
+  riskLevel: document.querySelector("#riskLevel"),
+  riskSummary: document.querySelector("#riskSummary"),
+  totalSugarHero: document.querySelector("#totalSugarHero"),
+  metricKcalComparison: document.querySelector("#metricKcalComparison"),
+  metricKcalComparisonSub: document.querySelector("#metricKcalComparisonSub"),
+  metricSugarComparison: document.querySelector("#metricSugarComparison"),
+  metricSugarComparisonSub: document.querySelector("#metricSugarComparisonSub"),
+  metricSugarBar: document.querySelector("#metricSugarBar"),
+  metricFiberComparison: document.querySelector("#metricFiberComparison"),
+  metricFiberComparisonSub: document.querySelector("#metricFiberComparisonSub"),
+  metricFiberBar: document.querySelector("#metricFiberBar"),
+  metricSodiumComparison: document.querySelector("#metricSodiumComparison"),
+  metricSodiumComparisonSub: document.querySelector("#metricSodiumComparisonSub"),
+  metricSodiumBar: document.querySelector("#metricSodiumBar"),
+  metricKcalBar: document.querySelector("#metricKcalBar"),
+  metricBmi: document.querySelector("#metricBmi"),
+  metricProfile: document.querySelector("#metricProfile"),
+};
+
+function formatNumber(value) {
+  return Number(value).toLocaleString("ko-KR", {
+    maximumFractionDigits: value % 1 === 0 ? 0 : 1,
+  });
+}
+
+function setComparisonBar(element, ratioPercent, invert = false) {
+  if (!element) {
+    return;
+  }
+
+  const safeRatio = Number.isFinite(ratioPercent) ? ratioPercent : 0;
+  const cappedWidth = Math.max(0, Math.min(safeRatio, 160));
+  element.style.width = `${Math.max(6, Math.min(cappedWidth, 100))}%`;
+
+  let state = "low";
+  const compareValue = invert ? 100 - safeRatio : safeRatio;
+
+  if (compareValue >= 120) {
+    state = "high";
+  } else if (compareValue >= 100 || (invert && safeRatio < 80)) {
+    state = "caution";
+  }
+
+  element.style.background =
+    state === "high"
+      ? "var(--high)"
+      : state === "caution"
+        ? "var(--caution)"
+        : "var(--low)";
+}
+
+function normalizeText(value) {
+  return value.replace(/\s+/g, "").toLowerCase();
+}
+
+function parseMealTokens(value) {
+  return value
+    .split(/[,\n\s]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function getCurrentToken(value) {
+  const parts = value.split(/[,\n\s]+/);
+  return (parts.at(-1) || "").trim();
+}
+
+async function loadJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to load ${url}: ${response.status}`);
+  }
+  return response.json();
+}
+
+async function loadFoods() {
+  try {
+    const [foods, foodIndex] = await Promise.all([
+      loadJson("./data/foods.json"),
+      loadJson("./data/food-index.json"),
+    ]);
+
+    if (Array.isArray(foods) && foods.length > 0) {
+      state.foods = foods;
+      state.foodIndex = Array.isArray(foodIndex) ? foodIndex : foods;
+      return;
+    }
+  } catch (error) {
+    console.warn("JSON food data load failed, falling back to foods.js", error);
+  }
+
+  const fallbackModule = await import("./data/foods.js");
+  state.foods = fallbackModule.foods || [];
+  state.foodIndex = state.foods.map((food) => ({
+    id: food.id,
+    nameKo: food.nameKo,
+    nameEn: food.nameEn,
+    aliases: food.aliases || [],
+    cuisine: food.cuisine,
+    category: food.category,
+    subcategory: food.subcategory,
+    dataQuality: food.dataQuality,
+    riskTag: food.riskTag,
+  }));
+}
+
+function getBestFoodMatch(rawToken) {
+  const token = normalizeText(rawToken);
+  if (!token) {
+    return null;
+  }
+
+  const exactMatch = state.foodIndex.find(
+    (food) =>
+      normalizeText(food.nameKo) === token ||
+      normalizeText(food.nameEn) === token ||
+      (food.aliases || []).some((alias) => normalizeText(alias) === token),
+  );
+  if (exactMatch) {
+    return state.foods.find((food) => food.id === exactMatch.id) || null;
+  }
+
+  const partialMatch = state.foodIndex.find(
+    (food) =>
+      normalizeText(food.nameKo).includes(token) ||
+      token.includes(normalizeText(food.nameKo)) ||
+      normalizeText(food.nameEn).includes(token) ||
+      token.includes(normalizeText(food.nameEn)) ||
+      (food.aliases || []).some(
+        (alias) =>
+          normalizeText(alias).includes(token) || token.includes(normalizeText(alias)),
+      ),
+  );
+
+  if (!partialMatch) {
+    return null;
+  }
+
+  return state.foods.find((food) => food.id === partialMatch.id) || null;
+}
+
+function getSuggestions(rawToken) {
+  const token = normalizeText(rawToken);
+  if (!token || token.length < 1) {
+    return [];
+  }
+
+  const scored = state.foodIndex
+    .map((food) => {
+      const names = [food.nameKo, food.nameEn, ...(food.aliases || [])].filter(Boolean);
+      let score = 0;
+
+      names.forEach((name) => {
+        const normalized = normalizeText(name);
+        if (normalized === token) {
+          score = Math.max(score, 100);
+        } else if (normalized.startsWith(token)) {
+          score = Math.max(score, 80);
+        } else if (normalized.includes(token) || token.includes(normalized)) {
+          score = Math.max(score, 60);
+        }
+      });
+
+      return { food, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((left, right) => right.score - left.score || left.food.nameKo.localeCompare(right.food.nameKo, "ko"))
+    .slice(0, 8);
+
+  return scored.map(({ food }) => food);
+}
+
+function updateSuggestions(mealType, value) {
+  const currentToken = getCurrentToken(value);
+  state.activeSuggestions[mealType] = getSuggestions(currentToken);
+}
+
+function applySuggestion(mealType, foodId) {
+  const food = state.foods.find((entry) => entry.id === foodId);
+  const input = elements.mealInputs[mealType];
+  if (!food || !input) {
+    return;
+  }
+
+  const currentValue = input.value;
+  const match = currentValue.match(/^(.*?)(?:[,\n\s]+)?[^\s,\n]*$/s);
+  const prefix = match?.[1]?.trim() || "";
+  input.value = prefix ? `${prefix} ${food.nameKo} ` : `${food.nameKo} `;
+
+  state.mealDrafts[mealType] = input.value;
+  state.activeSuggestions[mealType] = [];
+  rebuildSelectedFoods();
+  renderAll();
+  input.focus();
+}
+
+function rebuildSelectedFoods() {
+  const nextSelectedFoods = [];
+
+  mealTypeOptions.forEach((mealType) => {
+    const tokens = parseMealTokens(state.mealDrafts[mealType.value]);
+
+    tokens.forEach((token) => {
+      const food = getBestFoodMatch(token);
+      if (food) {
+        nextSelectedFoods.push({
+          foodId: food.id,
+          mealType: mealType.value,
+          multiplier: 1,
+          inputLabel: token,
+        });
+      }
+    });
+  });
+
+  state.selectedFoods = nextSelectedFoods;
+}
+
+function updateMultiplier(foodId, mealType, nextValue) {
+  const parsed = Number(nextValue);
+  const safeValue = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+
+  state.selectedFoods = state.selectedFoods.map((item) =>
+    item.foodId === foodId && item.mealType === mealType
+      ? { ...item, multiplier: safeValue }
+      : item,
+  );
+
+  renderAll();
+}
+
+function getSelectedFoodData() {
+  return state.selectedFoods
+    .map((item) => {
+      const foodFromState = state.foods.find((entry) => entry.id === item.foodId);
+      if (!foodFromState) {
+        return null;
+      }
+
+      return {
+        food: foodFromState,
+        multiplier: item.multiplier,
+        mealType: item.mealType,
+        inputLabel: item.inputLabel,
+      };
+    })
+    .filter(Boolean);
+}
+
+function renderMealList() {
+  const selectedData = getSelectedFoodData();
+
+  if (selectedData.length === 0) {
+    elements.mealList.className = "meal-list empty-state";
+    elements.mealList.textContent = "선택된 음식이 없습니다.";
+    return;
+  }
+
+  elements.mealList.className = "meal-list";
+  elements.mealList.innerHTML = mealTypeOptions
+    .map((mealType) => {
+      const items = selectedData.filter(({ mealType: selectedMealType }) => selectedMealType === mealType.value);
+      const totalMealGL = items.reduce((sum, { food, multiplier }) => sum + food.gl * multiplier, 0);
+
+      return `
+        <section class="meal-group">
+          <div class="meal-group-header">
+            <h3>${mealType.label}</h3>
+            <span>${items.length}개 음식 / 탄수화물 부담 ${formatNumber(totalMealGL)}</span>
+          </div>
+          ${
+            items.length === 0
+              ? `<div class="empty-state">아직 추가된 음식이 없습니다.</div>`
+              : items
+                  .map(
+                    ({ food, multiplier, mealType: itemMealType }) => `
+                      <div class="meal-item">
+                        <div>
+                          <strong>${food.nameKo}</strong>
+                          <span class="food-meta">${food.nameEn}</span>
+                        </div>
+                        <div>
+                          <strong>${formatNumber(food.kcal * multiplier)} kcal</strong>
+                          <span class="food-meta">입력된 섭취량 기준</span>
+                        </div>
+                        <label>
+                          <span class="food-meta">배수</span>
+                          <input
+                            class="multiplier-input"
+                            type="number"
+                            min="0.5"
+                            step="0.5"
+                            value="${multiplier}"
+                            data-multiplier-food="${food.id}"
+                            data-multiplier-meal="${itemMealType}"
+                          />
+                        </label>
+                        <div class="food-meta">입력 반영됨</div>
+                      </div>
+                    `,
+                  )
+                  .join("")
+          }
+        </section>
+      `;
+    })
+    .join("");
+}
+
+function renderQualityList(selectedData) {
+  if (selectedData.length === 0) {
+    elements.qualityList.className = "quality-list empty-state";
+    elements.qualityList.textContent =
+      "선택된 음식이 없으면 데이터 품질 정보가 여기에 표시됩니다.";
+    return;
+  }
+
+  elements.qualityList.className = "quality-list";
+  elements.qualityList.innerHTML = selectedData
+    .map(
+      ({ food }) => `
+        <div class="quality-item">
+          <div>
+            <strong>${food.nameKo}</strong>
+            <span class="food-meta">${food.nutritionSource || "nutrition source unavailable"}</span>
+          </div>
+          <div>
+            <span class="badge ${food.dataQuality}">${food.dataQuality}</span>
+          </div>
+          <div>
+            <strong>탄수화물 ${formatNumber(food.carbohydrate)}g</strong>
+            <span class="food-meta">당류 ${formatNumber(food.sugar)}g / 식이섬유 ${formatNumber(food.fiber)}g</span>
+          </div>
+          <div class="food-meta">${food.note}</div>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function renderSuggestions() {
+  mealTypeOptions.forEach((mealType) => {
+    const container = elements.mealSuggestions[mealType.value];
+    const suggestions = state.activeSuggestions[mealType.value] || [];
+
+    if (!container) {
+      return;
+    }
+
+    if (suggestions.length === 0) {
+      container.className = "meal-suggestions";
+      container.innerHTML = "";
+      return;
+    }
+
+    container.className = "meal-suggestions has-items";
+    container.innerHTML = `
+      <div class="meal-suggestion-list">
+        ${suggestions
+          .map(
+            (food) => `
+              <button
+                type="button"
+                class="meal-suggestion-item"
+                data-suggestion-meal="${mealType.value}"
+                data-suggestion-food="${food.id}"
+              >
+                <span class="meal-suggestion-top">${food.nameKo}</span>
+              </button>
+            `,
+          )
+          .join("")}
+      </div>
+    `;
+  });
+}
+
+function renderResults() {
+  const selectedData = getSelectedFoodData();
+  // Totals are recalculated every render so the UI stays fully static and client-side.
+  const totals = calculateDailyTotals(selectedData);
+  const profileMetrics = calculateProfileMetrics(state.profile);
+  const guidance = calculateDailyGuidance(profileMetrics);
+  const risk = calculateRisk(totals, profileMetrics);
+  const calorieDifference = Math.round((totals.totalCalories - guidance.recommendedCalories) * 10) / 10;
+  const calorieRatio = guidance.recommendedCalories
+    ? Math.round((totals.totalCalories / guidance.recommendedCalories) * 100)
+    : 0;
+  const sugarDifference = Math.round((totals.totalSugar - guidance.recommendedSugar) * 10) / 10;
+  const sugarRatio = guidance.recommendedSugar
+    ? Math.round((totals.totalSugar / guidance.recommendedSugar) * 100)
+    : 0;
+  const fiberDifference = Math.round((guidance.recommendedFiber - totals.totalFiber) * 10) / 10;
+  const fiberRatio = guidance.recommendedFiber
+    ? Math.round((totals.totalFiber / guidance.recommendedFiber) * 100)
+    : 0;
+  const sodiumDifference = Math.round((totals.totalSodium - guidance.recommendedSodium) * 10) / 10;
+  const sodiumRatio = guidance.recommendedSodium
+    ? Math.round((totals.totalSodium / guidance.recommendedSodium) * 100)
+    : 0;
+
+  const riskClassMap = {
+    Low: "risk-low",
+    Caution: "risk-caution",
+    High: "risk-high",
+  };
+
+  elements.riskCard.className = `risk-card ${riskClassMap[risk.level]}`;
+  elements.riskLevel.textContent = risk.level;
+  elements.riskSummary.textContent = risk.summary;
+  elements.totalSugarHero.textContent = `${formatNumber(totals.totalSugar)} g`;
+
+  elements.metricKcalComparison.textContent = `오늘 먹은 칼로리: ${formatNumber(totals.totalCalories)} kcal`;
+  elements.metricKcalComparisonSub.textContent =
+    `권장 칼로리: ${formatNumber(guidance.recommendedCalories)} kcal / ` +
+    `${calorieDifference >= 0 ? "초과량" : "부족량"}: ${formatNumber(Math.abs(calorieDifference))} kcal / ` +
+    `섭취 비율: ${formatNumber(calorieRatio)}%`;
+  elements.metricSugarComparison.textContent = `오늘 먹은 당류: ${formatNumber(totals.totalSugar)} g`;
+  elements.metricSugarComparisonSub.textContent =
+    `권장 당류 상한: ${formatNumber(guidance.recommendedSugar)} g / ` +
+    `${sugarDifference >= 0 ? "초과량" : "부족량"}: ${formatNumber(Math.abs(sugarDifference))} g / ` +
+    `섭취 비율: ${formatNumber(sugarRatio)}%`;
+  elements.metricFiberComparison.textContent = `오늘 먹은 식이섬유: ${formatNumber(totals.totalFiber)} g`;
+  elements.metricFiberComparisonSub.textContent =
+    `권장 식이섬유: ${formatNumber(guidance.recommendedFiber)} g / ` +
+    `${fiberDifference >= 0 ? "부족량" : "초과량"}: ${formatNumber(Math.abs(fiberDifference))} g / ` +
+    `섭취 비율: ${formatNumber(fiberRatio)}%`;
+  elements.metricSodiumComparison.textContent = `오늘 먹은 나트륨: ${formatNumber(totals.totalSodium)} mg`;
+  elements.metricSodiumComparisonSub.textContent =
+    `권장 나트륨 상한: ${formatNumber(guidance.recommendedSodium)} mg / ` +
+    `${sodiumDifference >= 0 ? "초과량" : "부족량"}: ${formatNumber(Math.abs(sodiumDifference))} mg / ` +
+    `섭취 비율: ${formatNumber(sodiumRatio)}%`;
+  elements.metricBmi.textContent = profileMetrics.bmi ? formatNumber(profileMetrics.bmi) : "-";
+  elements.metricProfile.textContent =
+    profileMetrics.profileAdjustment > 0
+      ? `+${formatNumber(profileMetrics.profileAdjustment)}`
+      : profileMetrics.profileAdjustment < 0
+        ? formatNumber(profileMetrics.profileAdjustment)
+        : "없음";
+
+  setComparisonBar(elements.metricKcalBar, calorieRatio);
+  setComparisonBar(elements.metricSugarBar, sugarRatio);
+  setComparisonBar(elements.metricFiberBar, fiberRatio, true);
+  setComparisonBar(elements.metricSodiumBar, sodiumRatio);
+
+  renderQualityList(selectedData);
+}
+
+function renderAll() {
+  renderSuggestions();
+  renderMealList();
+  renderResults();
+}
+
+document.addEventListener("click", (event) => {
+  const suggestionFoodId = event.target.closest("[data-suggestion-food]")?.dataset.suggestionFood;
+  const suggestionMealType = event.target.closest("[data-suggestion-meal]")?.dataset.suggestionMeal;
+
+  if (suggestionFoodId && suggestionMealType) {
+    applySuggestion(suggestionMealType, suggestionFoodId);
+  }
+});
+
+document.addEventListener("change", (event) => {
+  const foodId = event.target.dataset.multiplierFood;
+  const mealType = event.target.dataset.multiplierMeal;
+  if (foodId) {
+    updateMultiplier(foodId, mealType, event.target.value);
+  }
+});
+
+async function init() {
+  await loadFoods();
+
+  elements.genderInput.addEventListener("change", (event) => {
+    state.profile.gender = event.target.value;
+    renderAll();
+  });
+
+  elements.heightInput.addEventListener("input", (event) => {
+    state.profile.heightCm = event.target.value;
+    renderAll();
+  });
+
+  elements.weightInput.addEventListener("input", (event) => {
+    state.profile.weightKg = event.target.value;
+    renderAll();
+  });
+
+  Object.entries(elements.mealInputs).forEach(([mealType, input]) => {
+    input.addEventListener("input", (event) => {
+      state.mealDrafts[mealType] = event.target.value;
+      updateSuggestions(mealType, event.target.value);
+      rebuildSelectedFoods();
+      renderAll();
+    });
+
+    input.addEventListener("blur", () => {
+      window.setTimeout(() => {
+        state.activeSuggestions[mealType] = [];
+        renderSuggestions();
+      }, 120);
+    });
+
+    input.addEventListener("focus", (event) => {
+      updateSuggestions(mealType, event.target.value);
+      renderSuggestions();
+    });
+  });
+
+  rebuildSelectedFoods();
+  renderAll();
+}
+
+init().catch((error) => {
+  console.error(error);
+});
+
+:root {
+  --bg: #f0b61d;
+  --panel: #ffbf1f;
+  --panel-strong: #f58b1f;
+  --line: #1b1b1b;
+  --text: #111111;
+  --muted: #3b2412;
+  --accent: #111111;
+  --accent-soft: #f58b1f;
+  --low: #111111;
+  --low-soft: #ffbf1f;
+  --caution: #111111;
+  --caution-soft: #ffbf1f;
+  --high: #111111;
+  --high-soft: #ffbf1f;
+  --shadow: 0 10px 0 rgba(0, 0, 0, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
+  color: var(--text);
+  background: #f0b61d;
+}
+
+.page-shell {
+  width: min(1200px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 64px;
+  position: relative;
+  transition: width 180ms ease;
+}
+
+.page-shell:has(.data-drawer[open]) {
+  width: min(1540px, calc(100% - 32px));
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  background: #ffbf1f;
+}
+
+.hero,
+.panel {
+  background: var(--panel);
+  border: 3px solid var(--line);
+  box-shadow: var(--shadow);
+  border-radius: 0;
+  backdrop-filter: none;
+}
+
+.hero {
+  padding: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 10px;
+  font-size: clamp(2rem, 4vw, 3.6rem);
+  line-height: 0.98;
+}
+
+.hero-title {
+  margin: 0;
+  width: 100%;
+  text-align: center;
+  font-size: clamp(2.8rem, 9vw, 7rem);
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  line-height: 1;
+  text-indent: 0.28em;
+  color: #111111;
+  text-transform: uppercase;
+}
+
+.dashboard {
+  display: grid;
+  gap: 20px;
+}
+
+.data-sidebar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  width: 0;
+}
+
+.data-drawer {
+  position: relative;
+  width: fit-content;
+  overflow: visible;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.data-drawer summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 2px 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #222;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.data-drawer summary::-webkit-details-marker {
+  display: none;
+}
+
+.data-drawer summary::after {
+  content: "";
+}
+
+.data-drawer[open] summary::after {
+  content: "";
+}
+
+.data-drawer-body {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 12px);
+  width: 340px;
+  max-height: min(70vh, 760px);
+  overflow: auto;
+  padding: 14px;
+  display: grid;
+  gap: 14px;
+  background: rgba(255, 253, 249, 0.98);
+  border: 1px solid #dfd5c6;
+  border-radius: 0;
+  box-shadow: var(--shadow);
+}
+
+.page-shell:has(.data-drawer[open]) .hero,
+.page-shell:has(.data-drawer[open]) .dashboard {
+  margin-left: 380px;
+}
+
+.hero,
+.dashboard {
+  transition: margin-left 180ms ease;
+}
+
+.drawer-block {
+  padding: 16px;
+  border-radius: 0;
+  background: #f58b1f;
+  border: 2px solid #111111;
+}
+
+.medical-note {
+  margin-bottom: 0;
+  padding: 16px;
+  border-radius: 0;
+  background: #111111;
+  border: 2px solid #111111;
+  color: #ffb24d;
+  box-shadow: none;
+}
+
+.panel {
+  padding: 24px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 18px;
+}
+
+.section-heading h2 {
+  margin-bottom: 0;
+}
+
+.section-note {
+  color: var(--muted);
+  text-align: right;
+  max-width: 360px;
+}
+
+.field span,
+.filter-title {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #30433f;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 3px solid var(--line);
+  border-radius: 0;
+  background: var(--panel-strong);
+  font-size: 1rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.filters {
+  display: grid;
+  gap: 14px;
+}
+
+.meal-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.meal-text-field textarea {
+  min-height: 132px;
+  line-height: 1.55;
+}
+
+.meal-text-field {
+  position: relative;
+}
+
+.meal-suggestions {
+  display: none;
+  margin-top: 10px;
+  padding: 10px;
+  border: 3px solid #111111;
+  border-radius: 0;
+  background: #f58b1f;
+}
+
+.meal-suggestions.has-items {
+  display: block;
+}
+
+.meal-suggestion-list {
+  display: grid;
+  gap: 8px;
+}
+
+.meal-suggestion-item {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #111111;
+  border-radius: 0;
+  background: #111111;
+  color: #ffcc38;
+  text-align: left;
+  cursor: pointer;
+}
+
+.meal-suggestion-item:hover {
+  background: #2a2a2a;
+}
+
+.meal-suggestion-top {
+  font-weight: 700;
+  color: #243330;
+}
+
+.meal-suggestion-empty {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.entry-note {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: #30433f;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: 160ms ease;
+}
+
+.chip.active,
+.chip:hover {
+  background: var(--accent-soft);
+  border-color: rgba(31, 111, 99, 0.45);
+  color: var(--accent);
+}
+
+.food-name {
+  font-weight: 700;
+}
+
+.food-meta {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.action-button,
+.secondary-button,
+.multiplier-input {
+  border-radius: 12px;
+}
+
+.action-button {
+  border: none;
+  background: var(--accent);
+  color: white;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.secondary-button {
+  border: 1px solid #d7ccc0;
+  background: white;
+  color: #7b3737;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.meal-list {
+  display: grid;
+  gap: 12px;
+}
+
+.meal-group {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 3px solid #111111;
+  background: #f58b1f;
+  border-radius: 0;
+}
+
+.meal-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.meal-group-header h3 {
+  margin: 0;
+}
+
+.meal-group-header span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.meal-item,
+.quality-item {
+  display: grid;
+  grid-template-columns: 1.6fr 0.8fr 0.7fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 2px solid #111111;
+  background: #f58b1f;
+  border-radius: 0;
+}
+
+.meal-item strong,
+.quality-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.multiplier-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: white;
+}
+
+.empty-state {
+  min-height: 88px;
+  place-items: center;
+  color: var(--muted);
+  border: 3px dashed #111111;
+  border-radius: 0;
+  display: grid;
+  background: rgba(245, 139, 31, 0.9);
+}
+
+.risk-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 22px;
+  border-radius: 0;
+  margin-bottom: 18px;
+}
+
+.risk-card h3 {
+  margin-bottom: 8px;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+}
+
+.risk-label,
+.risk-glance p {
+  color: var(--muted);
+}
+
+.risk-glance {
+  min-width: 140px;
+  text-align: right;
+}
+
+.risk-glance strong {
+  font-size: 2.4rem;
+}
+
+.risk-low {
+  background: #ffbf1f;
+  border: 3px solid #111111;
+}
+
+.risk-caution {
+  background: #ffbf1f;
+  border: 3px solid #111111;
+}
+
+.risk-high {
+  background: #ffbf1f;
+  border: 3px solid #111111;
+}
+
+.risk-card > div {
+  background: #ffbf1f;
+  padding: 14px 16px;
+  border: 2px solid #111111;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.metric-card,
+.result-box {
+  padding: 16px;
+  border-radius: 0;
+  background: #f58b1f;
+  border: 3px solid #111111;
+}
+
+.metric-card span {
+  display: block;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.metric-card strong {
+  font-size: 1.45rem;
+}
+
+.metric-subtext {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.metric-card {
+  min-height: 122px;
+}
+
+.comparison-bar {
+  margin-top: 14px;
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: #ece7dc;
+  overflow: hidden;
+}
+
+.comparison-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--low);
+  transition: width 180ms ease, background-color 180ms ease;
+}
+
+.result-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.plain-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #384845;
+}
+
+.quality-list {
+  display: grid;
+  gap: 12px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 7px 10px;
+  border-radius: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.badge.official {
+  color: #ffcc38;
+  background: #111111;
+}
+
+.badge.estimated {
+  color: #111111;
+  background: #f58b1f;
+}
+
+.badge.rough {
+  color: #111111;
+  background: #ff8d1f;
+}
+
+.source-copy p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 980px) {
+  .result-columns,
+  .metric-grid,
+  .meal-input-grid,
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .section-note {
+    text-align: left;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-shell {
+    width: min(100% - 20px, 1200px);
+    padding-top: 20px;
+  }
+
+  .hero,
+  .panel {
+    border-radius: 0;
+    padding: 18px;
+  }
+
+  .data-sidebar {
+    position: static;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .data-drawer {
+    width: 100%;
+  }
+
+  .data-drawer summary {
+    width: fit-content;
+  }
+
+  .data-drawer-body {
+    position: static;
+    width: 100%;
+    max-height: none;
+    margin-top: 10px;
+  }
+
+  .page-shell:has(.data-drawer[open]) {
+    width: min(100% - 20px, 1200px);
+  }
+
+  .page-shell:has(.data-drawer[open]) .hero,
+  .page-shell:has(.data-drawer[open]) .dashboard {
+    margin-left: 0;
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 14vw, 3rem);
+    letter-spacing: 0.18em;
+    text-indent: 0.18em;
+  }
+
+  .meal-item,
+  .quality-item,
+  .risk-card {
+    grid-template-columns: 1fr;
+  }
+
+  .risk-glance {
+    text-align: left;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
